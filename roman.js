@@ -144,18 +144,36 @@ document.addEventListener("DOMContentLoaded", () => {
         chatBox.appendChild(botMsg);
         phase = 3;
       } else if (phase === 3) {
-        // ผู้เล่นพิมพ์เลขซ้ำ
-        userMostFreq = parseInt(userText);
+          // ผู้เล่นพิมพ์เลขซ้ำ
+          userMostFreq = parseInt(userText);
 
-        // เฉลยทั้งหมด
-        for (let i = 0; i < 12; i++) {
-          let row = i < 6 ? "row-top" : "row-bottom";
-          document.getElementById(row).children[i % 6].src = `symbol_${slots[i]}.png`;
-        }
+          // เฉลยทั้งหมด
+          for (let i = 0; i < 12; i++) {
+            let row = i < 6 ? "row-top" : "row-bottom";
+            document.getElementById(row).children[i % 6].src = `symbol_${slots[i]}.png`;
+          }
 
-        chatInput.style.display = "none";
-        choiceDiv.classList.remove("hidden");
-        phase = 4;
+          chatInput.style.display = "none"; // ซ่อน input
+
+          if (userMostFreq !== mainNum) {
+            // ผู้เล่นตอบผิด จบเกม
+            const botMsg = document.createElement("div");
+            botMsg.className = "px-3 py-1 rounded-lg text-[#730000] bg-[#FB4141] max-w-xs self-start font-extrabold";
+            botMsg.innerHTML = `❌ ตอบผิด! เลขซ้ำเยอะที่สุดคือ ${mainNum}`;
+            chatBox.appendChild(botMsg);
+
+            // ซ่อนปุ่ม choice
+            choiceDiv.classList.add("hidden");
+            chatInput.style.display = "none";
+            phase = 0;
+            turn = 0;
+            round = 0;
+            mainNum = null;
+          } else {
+            // ผู้เล่นตอบถูก ไปต่อ
+            choiceDiv.classList.remove("hidden");
+            phase = 4;
+          }
       }
 
       chatBox.scrollTop = chatBox.scrollHeight;
@@ -174,8 +192,8 @@ document.addEventListener("DOMContentLoaded", () => {
     const eyeText = eyeType === "open" ? "ตาเปิด" : "ตาปิด";
 
     let correct;
-    if (eyeType === "open") correct = isYes;   // ต้องยืนเลขซ้ำ
-    else correct = !isYes;                     // ต้องไม่ยืนเลขซ้ำ
+    if (eyeType === "open") correct = isYes;
+    else correct = !isYes;
 
     const shouldText = (eyeType === "open") ? "ควรยืนเลขซ้ำ" : "ไม่ควรยืนเลขซ้ำ";
 
