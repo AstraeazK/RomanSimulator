@@ -1,11 +1,59 @@
 let slots = [];
 let maskTop = [];
 let maskBottom = [];
-let turn = 0;     // 0 = แถวบน, 1 = แถวล่าง
-let phase = 0;    // 0 = เฉลยปกติ, 1 = รวมบน, 2 = รวมล่าง, 3 = ถามเลขซ้ำ, 4 = เฉลยซ้ำ, 5 = ปุ่มเลือก
+let turn = 0;
+let phase = 0;
 let round = 0;
-let mainNum = null;       // เก็บเลขที่ซ้ำเยอะที่สุด
-let userMostFreq = null;  // คำตอบที่ผู้เล่นพิมพ์
+let mainNum = null;  
+let userMostFreq = null;
+let timerActive = true;
+let totalTime = 43;
+let timerInterval = null;
+
+
+function startTimer() {
+  clearInterval(timerInterval);
+  totalTime = 43;
+  document.getElementById("timer-text").textContent = formatTime(totalTime);
+  timerInterval = setInterval(() => {
+    totalTime--;
+    document.getElementById("timer-text").textContent = formatTime(totalTime);
+
+    if (totalTime <= 0) {
+      clearInterval(timerInterval);
+      endGameDueToTimeout();
+    }
+  }, 1000);
+}
+
+function formatTime(seconds) {
+  const m = Math.floor(seconds / 60);
+  const s = seconds % 60;
+  return `${m}:${s.toString().padStart(2, "0")}`;
+}
+
+function endGameDueToTimeout() {
+  const chatBox = document.getElementById("chat-box");
+  const msg = document.createElement("div");
+  msg.className = "px-3 py-1 rounded-lg text-[#730000] bg-[#FB4141] max-w-xs self-start font-extrabold";
+  msg.textContent = "⏰ หมดเวลา!";
+  chatBox.appendChild(msg);
+
+  // ซ่อน input และ choice
+  document.getElementById("chat-input").style.display = "none";
+  document.getElementById("choice-div").classList.add("hidden");
+
+  // reset state
+  phase = 0;
+  turn = 0;
+  round = 0;
+  mainNum = null;
+}
+
+// เริ่มนับเวลาเมื่อกดปุ่มสุ่ม
+document.getElementById("random-btn").addEventListener("click", () => {
+  startTimer();
+});
 
 function randomChoice(arr) {
   return arr[Math.floor(Math.random() * arr.length)];
@@ -157,6 +205,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
           if (userMostFreq !== mainNum) {
             // ผู้เล่นตอบผิด จบเกม
+            clearInterval(timerInterval);
             const botMsg = document.createElement("div");
             botMsg.className = "px-3 py-1 rounded-lg text-[#730000] bg-[#FB4141] max-w-xs self-start font-extrabold";
             botMsg.innerHTML = `❌ ตอบผิด! เลขซ้ำเยอะที่สุดคือ ${mainNum}`;
@@ -184,6 +233,7 @@ document.addEventListener("DOMContentLoaded", () => {
   document.getElementById("btn-yes").addEventListener("click", () => checkAnswer(true));
   document.getElementById("btn-no").addEventListener("click", () => checkAnswer(false));
   function checkAnswer(isYes) {
+    clearInterval(timerInterval);
     const botMsg = document.createElement("div");
 
     // แปลง eyeType เป็น open/close
