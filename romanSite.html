@@ -7,7 +7,7 @@
 </head>
 <body class="bg-gradient-to-b from-purple-950 to-black text-white min-h-screen flex items-center justify-center">
   <div class="w-full max-w-4xl p-6 bg-purple-900/50 rounded-2xl shadow-lg text-center">
-    <h1 class="text-3xl font-bold text-purple-300 mb-6">เลขโรมัน Simulator</h1>
+    <h1 class="text-3xl font-bold text-purple-300 mb-6" id="title">เลขโรมัน Simulator</h1>
 
     <!-- แถวตา -->
     <div class="flex justify-center mb-4">
@@ -37,14 +37,15 @@
 
       <!-- ปุ่มสุ่ม -->
     <button id="random-btn"
-      class="px-6 py-3 bg-purple-600 hover:bg-purple-700 text-white rounded-xl font-bold shadow-lg transition">
+      class="px-6 py-3 bg-purple-600 hover:bg-purple-700 text-white rounded-xl font-bold shadow-lg transition" 
+        id="Start-button">
       สุ่มเลขโรมัน
     </button>
 
     <!-- แชท -->
     <div id="chat-section" class="hidden bg-[#1b1734]/70 rounded-xl p-4 shadow-inner mt-6 max-w-lg mx-auto">
       <div id="chat-box" class="h-48 overflow-y-auto text-left space-y-2 mb-3"></div>
-      <input id="chat-input" type="text" placeholder="พิมพ์ตัวเลขที่เห็นแล้วกด Enter || ตัวอย่าง:--6 5-6" maxlength="20"
+      <input id="chat-input" type="text" placeholder="พิมพ์ตัวเลขที่เห็นแล้วกด Enter || ตัวอย่าง:--6 5-6" maxlength="20" 
         class="w-full px-3 py-2 rounded-lg bg-purple-800 text-white placeholder-purple-300 focus:outline-none focus:ring-2 focus:ring-purple-500">
     </div>
 
@@ -62,10 +63,36 @@
     </div>
   </div>
 
-  <div class="flex items-center pl-2">
-    <img id="timer-btn" src="/Icon/Hourglass.png" alt="เวลา" class="w-12 h-12 rounded-lg">
-    <span id="timer-text" class="ml-2 text-lg font-medium">0:43</span>
+  <div class="pl-2">
+    <!-- นาฬิกา + เวลา -->
+    <div class="flex items-center space-x-2">
+      <img id="timer-btn" src="/Icon/Hourglass.png" alt="เวลา" class="w-12 h-12 rounded-lg">
+      <span id="timer-text" class="text-lg font-medium">0:43</span>
+    </div>
+
+    <!-- ไอคอนภาษา -->
+    <div class="mt-2 flex items-center space-x-2">
+    <img id="language-btn" src="/Icon/Language.png" alt="Language" class="w-12 h-12 rounded-lg">
+
+    <!-- Dropdown ภาษา -->
+    <div class="relative inline-block text-left">
+      <button type="button" 
+              class="inline-flex w-full justify-center gap-x-1.5 rounded-md bg-white/10 px-3 py-2 text-sm font-semibold text-white hover:bg-white/20" 
+              id="language-dropdown-btn">
+        TH
+        <svg viewBox="0 0 20 20" fill="currentColor" class="-mr-1 h-5 w-5 text-gray-400">
+          <path d="M5.22 8.22a.75.75 0 0 1 1.06 0L10 11.94l3.72-3.72a.75.75 0 1 1 1.06 1.06l-4.25 4.25a.75.75 0 0 1-1.06 0L5.22 9.28a.75.75 0 0 1 0-1.06Z" clip-rule="evenodd" fill-rule="evenodd" />
+        </svg>
+      </button>
+
+      <div class="absolute left-0 z-10 mt-2 w-28 origin-top-left rounded-md bg-gray-800 shadow-lg ring-1 ring-white/10 focus:outline-none hidden" id="language-dropdown-menu">
+        <a href="#" class="block px-4 py-2 text-sm text-gray-300 hover:bg-white/5 hover:text-white">TH</a>
+        <a href="#" class="block px-4 py-2 text-sm text-gray-300 hover:bg-white/5 hover:text-white">EN</a>
+      </div>
+    </div>
+
   </div>
+
 
   <script src="roman.js"></script>
 </body>
