@@ -83,7 +83,6 @@ document.addEventListener("DOMContentLoaded", () => {
     phase = 0;
     turn = 0;
     round = 0;
-    mainNum = null;
     userMostFreq = null;
 
     // ✅ เอา input กลับมา
@@ -169,19 +168,24 @@ document.addEventListener("DOMContentLoaded", () => {
   function checkAnswer(isYes) {
     const botMsg = document.createElement("div");
 
-    const eyeType = document.getElementById("eye-default-1").src.includes("open_eye.png") ? "open" : "close";
+    // แปลง eyeType เป็น open/close
+    const eyeSrc = document.getElementById("eye-default-1").src;
+    const eyeType = eyeSrc.includes("open_eye.png") ? "open" : "close";
+    const eyeText = eyeType === "open" ? "ตาเปิด" : "ตาปิด";
+
     let correct;
     if (eyeType === "open") correct = isYes;   // ต้องยืนเลขซ้ำ
     else correct = !isYes;                     // ต้องไม่ยืนเลขซ้ำ
 
+    const shouldText = (eyeType === "open") ? "ควรยืนเลขซ้ำ" : "ไม่ควรยืนเลขซ้ำ";
+
     if (correct) {
       botMsg.className = "px-3 py-1 rounded-lg text-[#386641] bg-[#8ABB6C] max-w-xs self-start font-extrabold";
-      botMsg.innerHTML = `✅ ถูกต้อง! เลขซ้ำเยอะที่สุดคือ ${mainNum}, เนื่องจากเป็น ${eyeType}_eye.png จึงควร${eyeType==="open"?"ยืนเลขซ้ำ":"ยืนเลขไม่ซ้ำ"}`;
+      botMsg.innerHTML = `✅ ถูกต้อง! เลขซ้ำเยอะที่สุดคือ ${mainNum}, เนื่องจากเป็น ${eyeText} จึง${shouldText}`;
     } else {
-      botMsg.className = "px-3 py-1 rounded-lg text-[#730000] bg-[#FB4141] max-w-xs self-start font-extrabold";
-      botMsg.innerHTML = `❌ ตอบผิด! เลขซ้ำเยอะที่สุดคือ ${mainNum}, เนื่องจากเป็น ${eyeType}_eye.png จึงควร${eyeType==="open"?"ยืนเลขซ้ำ":"ยืนเลขไม่ซ้ำ"}`;
+      botMsg.className = "px-3 py-1 rounded-lg text-[#000000] bg-[#FB4141] max-w-xs self-start font-extrabold";
+      botMsg.innerHTML = `❌ ตอบผิด! เลขซ้ำเยอะที่สุดคือ ${mainNum}, เนื่องจากเป็น ${eyeText} จึง${shouldText}`;
     }
-
 
     chatBox.appendChild(botMsg);
 
@@ -191,6 +195,8 @@ document.addEventListener("DOMContentLoaded", () => {
     phase = 0;
     turn = 0;
     round = 0;
+    mainNum = null;
     chatBox.scrollTop = chatBox.scrollHeight;
   }
+
 });
