@@ -7,7 +7,7 @@ let round = 0;
 let mainNum = null;  
 let userMostFreq = null;
 let timerActive = true;
-let totalTime = 43;
+let totalTime = 40;
 let timerInterval = null;
 let currentLanguage = "th";
 
@@ -17,7 +17,7 @@ const options = menu.querySelectorAll('a');
 
 function startTimer() {
   clearInterval(timerInterval);
-  totalTime = 43;
+  totalTime = 40;
   document.getElementById("timer-text").textContent = formatTime(totalTime);
   timerInterval = setInterval(() => {
     totalTime--;
@@ -96,14 +96,14 @@ function applyLanguage() {
     chatInput.placeholder = "พิมพ์ตัวเลขที่เห็นแล้วกด Enter || ตัวอย่าง:--6 5-6";
     btnYes.innerText = "✅ ยืนเลขซ้ำ";
     btnNo.innerText = "❌ ไม่ยืนเลขซ้ำ";
-    timerText.innerText = "0:43";
+    timerText.innerText = "0:40";
   } else {
     title.innerText = "Roman Numeral Simulator";
     randomBtn.innerText = "Start";
     chatInput.placeholder = "Type the numbers you see and press Enter || Example:--6 5-6";
     btnYes.innerText = "✅ Stand Duplicate";
     btnNo.innerText = "❌ No Stand Duplicate";
-    timerText.innerText = "0:43";
+    timerText.innerText = "0:40";
   }
 }
 
