@@ -10,6 +10,9 @@ let timerActive = true;
 let totalTime = 40;
 let timerInterval = null;
 let currentLanguage = "th";
+let selectionMode = false;
+let selectedPositions = [];
+let selectionFinished = false;
 
 const btn = document.getElementById('language-dropdown-btn');
 const menu = document.getElementById('language-dropdown-menu');
@@ -156,10 +159,192 @@ function randomChoice(arr) {
   return arr[Math.floor(Math.random() * arr.length)];
 }
 
+function getWeightedRowCount() {
+  const weights = [1, 1, 1, 1, 1, 0.04];
+  const totalWeight = weights.reduce((sum, weight) => sum + weight, 0);
+  let roll = Math.random() * totalWeight;
+
+  for (let count = 1; count <= 6; count++) {
+    roll -= weights[count - 1];
+    if (roll <= 0) return count;
+  }
+
+  return 6;
+}
+
 function formatAnswer(arr, maskArr) {
   return arr.map((num, i) => maskArr[i] ? "-" : num)
             .map((val, i) => (i === 2 ? val + " " : val))
             .join("");
+}
+
+function getBoardImages() {
+  const rowTop = document.getElementById("row-top");
+  const rowBottom = document.getElementById("row-bottom");
+  if (!rowTop || !rowBottom) return [];
+  return [...rowTop.children, ...rowBottom.children];
+}
+
+function resetBoardSelectionStyles() {
+  getBoardImages().forEach((img) => {
+    img.style.outline = "";
+    img.style.outlineOffset = "";
+    img.style.boxShadow = "";
+    img.style.opacity = "1";
+    img.onmouseenter = null;
+    img.onmouseleave = null;
+  });
+}
+
+function updateBoardSelectionStyles() {
+  const images = getBoardImages();
+  images.forEach((img, index) => {
+    if (selectedPositions.includes(index)) {
+      img.style.outline = "4px solid #f472b6";
+      img.style.outlineOffset = "2px";
+      img.style.boxShadow = "0 0 0 4px rgba(244, 114, 182, 0.35)";
+    } else {
+      img.style.outline = "";
+      img.style.outlineOffset = "";
+      img.style.boxShadow = "";
+    }
+  });
+}
+
+function startPositionSelection(chatBox) {
+  selectionMode = true;
+  selectionFinished = false;
+  selectedPositions = [];
+  resetBoardSelectionStyles();
+
+  const promptMsg = document.createElement("div");
+  promptMsg.className = "bg-[#ce860e] px-3 py-1 rounded-lg text-white max-w-xs self-start font-extrabold italic";
+  const eyeSrc = document.getElementById("eye-default-1").src;
+  const isOpenEye = eyeSrc.includes("open_eye.png");
+  promptMsg.textContent = currentLanguage === "th"
+    ? (isOpenEye ? "เลือกตำแหน่งที่เป็นเลขซ้ำจากภาพด้านบน" : "เลือกตำแหน่งที่ไม่ซ้ำจากภาพด้านบน")
+    : (isOpenEye ? "Select the duplicate positions from the images above" : "Select the non-duplicate positions from the images above");
+  chatBox.appendChild(promptMsg);
+
+  const images = getBoardImages();
+  images.forEach((img, index) => {
+    img.onclick = () => {
+      if (!selectionMode || selectionFinished) return;
+
+      const existingIndex = selectedPositions.indexOf(index);
+      if (existingIndex >= 0) {
+        selectedPositions.splice(existingIndex, 1);
+      } else if (selectedPositions.length < 6) {
+        selectedPositions.push(index);
+      }
+
+      updateBoardSelectionStyles();
+
+      if (selectedPositions.length === 6) {
+        evaluateSelection(chatBox);
+      }
+    };
+
+    img.onmouseenter = () => {
+      if (!selectionMode || selectionFinished || selectedPositions.length >= 6) return;
+      if (selectedPositions.includes(index)) return;
+      img.style.outline = "3px solid #f472b6";
+      img.style.outlineOffset = "2px";
+      img.style.boxShadow = "0 0 0 4px rgba(244, 114, 182, 0.2)";
+    };
+
+    img.onmouseleave = () => {
+      if (!selectionMode || selectionFinished || selectedPositions.includes(index)) return;
+      img.style.outline = "";
+      img.style.outlineOffset = "";
+      img.style.boxShadow = "";
+    };
+  });
+
+  chatBox.scrollTop = chatBox.scrollHeight;
+}
+
+function evaluateSelection(chatBox) {
+  if (selectionFinished) return;
+
+  selectionFinished = true;
+  selectionMode = false;
+
+  const eyeSrc = document.getElementById("eye-default-1").src;
+  const isOpenEye = eyeSrc.includes("open_eye.png");
+  const correctPositions = [];
+
+  for (let i = 0; i < 12; i++) {
+    const isDuplicatePosition = slots[i] === mainNum;
+    if (isOpenEye ? isDuplicatePosition : !isDuplicatePosition) {
+      correctPositions.push(i);
+    }
+  }
+
+  const selectedSet = new Set(selectedPositions);
+  const correctSelected = selectedPositions.filter((index) => correctPositions.includes(index));
+  const incorrectSelected = selectedPositions.filter((index) => !correctPositions.includes(index));
+  const missedCorrect = correctPositions.filter((index) => !selectedSet.has(index));
+
+  const images = getBoardImages();
+  images.forEach((img, index) => {
+    const isCorrect = correctPositions.includes(index);
+    const isSelected = selectedSet.has(index);
+
+    if (isCorrect && isSelected) {
+      img.style.outline = "4px solid #22c55e";
+      img.style.outlineOffset = "2px";
+      img.style.boxShadow = "0 0 0 4px rgba(34, 197, 94, 0.35)";
+    } else if (isCorrect && !isSelected) {
+      img.style.outline = "4px solid #facc15";
+      img.style.outlineOffset = "2px";
+      img.style.boxShadow = "0 0 0 4px rgba(250, 204, 21, 0.35)";
+    } else if (!isCorrect && isSelected) {
+      img.style.outline = "4px solid #ef4444";
+      img.style.outlineOffset = "2px";
+      img.style.boxShadow = "0 0 0 4px rgba(239, 68, 68, 0.35)";
+    } else {
+      img.style.outline = "";
+      img.style.outlineOffset = "";
+      img.style.boxShadow = "";
+    }
+  });
+
+  const resultMsg = document.createElement("div");
+  resultMsg.className = "px-3 py-1 rounded-lg max-w-xs self-start font-extrabold";
+
+  if (correctSelected.length === correctPositions.length && incorrectSelected.length === 0) {
+    resultMsg.className += " text-[#386641] bg-[#8ABB6C]";
+    resultMsg.textContent = currentLanguage === "th" ? "✅ ถูกต้อง!" : "✅ Correct!";
+  } else if (correctSelected.length > 0 && incorrectSelected.length > 0) {
+    resultMsg.className += " text-[#7c2d12] bg-[#fbbf24]";
+    resultMsg.textContent = currentLanguage === "th"
+      ? "พยายามอีกนิดนะ ใกล้ถึงความเป็นจริงแล้ว"
+      : "Keep trying, you are very close";
+  } else if (correctSelected.length === 0 && selectedPositions.length > 0) {
+    resultMsg.className += " text-[#7f1d1d] bg-[#f87171]";
+    resultMsg.textContent = currentLanguage === "th"
+      ? "ลองกลับไปทบทวนอีกครั้ง"
+      : "Try reviewing it again";
+  } else if (missedCorrect.length > 0) {
+    resultMsg.className += " text-[#7c2d12] bg-[#fbbf24]";
+    resultMsg.textContent = currentLanguage === "th"
+      ? "พยายามอีกนิดนะ ใกล้ถึงความเป็นจริงแล้ว"
+      : "Keep trying, you are very close";
+  } else {
+    resultMsg.className += " text-[#386641] bg-[#8ABB6C]";
+    resultMsg.textContent = currentLanguage === "th" ? "✅ ถูกต้อง!" : "✅ Correct!";
+  }
+
+  chatBox.appendChild(resultMsg);
+
+  document.getElementById("chat-input").style.display = "none";
+  document.getElementById("choice-div").classList.add("hidden");
+  phase = 0;
+  turn = 0;
+  round = 0;
+  mainNum = null;
+  chatBox.scrollTop = chatBox.scrollHeight;
 }
 
 document.getElementById("random-btn").addEventListener("click", () => {
@@ -187,9 +372,8 @@ document.getElementById("random-btn").addEventListener("click", () => {
   // console.log("🔹 เฉลยแถวบน:", slots.slice(0, 6).join(", "));
   // console.log("🔹 เฉลยแถวล่าง:", slots.slice(6).join(", "));
 
-  function fillRow(rowId, startIdx, maskArr) {
+  function fillRow(rowId, startIdx, maskArr, numShow) {
     const rowElem = document.getElementById(rowId).children;
-    const numShow = Math.floor(Math.random() * 5) + 1;
     let showIndices = Array.from({length: 6}, (_, i) => i)
       .sort(() => Math.random() - 0.5)
       .slice(0, numShow);
@@ -206,10 +390,13 @@ document.getElementById("random-btn").addEventListener("click", () => {
     }
   }
 
+  const topCount = getWeightedRowCount();
+  const bottomCount = 6 - topCount;
+
   maskTop = Array(6).fill(false);
   maskBottom = Array(6).fill(false);
-  fillRow("row-top", 0, maskTop);
-  fillRow("row-bottom", 6, maskBottom);
+  fillRow("row-top", 0, maskTop, topCount);
+  fillRow("row-bottom", 6, maskBottom, bottomCount);
 });
 
 document.addEventListener("DOMContentLoaded", () => {
@@ -224,13 +411,18 @@ document.addEventListener("DOMContentLoaded", () => {
     chatSection.classList.remove("hidden");
     rowBottom.classList.add("hidden"); 
 
-    // ✅ reset state รอบใหม่
+    selectionMode = false;
+    selectionFinished = false;
+    selectedPositions = [];
+    resetBoardSelectionStyles();
+
+    //reset
     phase = 0;
     turn = 0;
     round = 0;
     userMostFreq = null;
 
-    // ✅ เอา input กลับมา
+    // เอา input กลับมา
     chatInput.style.display = "block";
     choiceDiv.classList.add("hidden");
 
@@ -376,15 +568,11 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     chatBox.appendChild(botMsg);
+    chatBox.scrollTop = chatBox.scrollHeight;
 
-    // reset รอบใหม่
     choiceDiv.classList.add("hidden");
     chatInput.style.display = "none";
-    phase = 0;
-    turn = 0;
-    round = 0;
-    mainNum = null;
-    chatBox.scrollTop = chatBox.scrollHeight;
+    startPositionSelection(chatBox);
   }
 
 });
