@@ -43,14 +43,18 @@ function endGameDueToTimeout() {
   const chatBox = document.getElementById("chat-box");
   const msg = document.createElement("div");
   msg.className = "px-3 py-1 rounded-lg text-[#730000] bg-[#FB4141] max-w-xs self-start font-extrabold";
-  msg.textContent = "⏰ หมดเวลา!";
+  msg.textContent = currentLanguage === "th" ? "⏰ หมดเวลา!" : "⏰ Time's up!";
   chatBox.appendChild(msg);
 
   // ซ่อน input และ choice
   document.getElementById("chat-input").style.display = "none";
   document.getElementById("choice-div").classList.add("hidden");
+  document.getElementById("number-choice-div").classList.add("hidden");
+  document.getElementById("selection-progress").classList.add("hidden");
 
   // reset state
+  selectionMode = false;
+  selectionFinished = true;
   phase = 0;
   turn = 0;
   round = 0;
@@ -99,15 +103,19 @@ function applyLanguage() {
     chatInput.placeholder = "พิมพ์ตัวเลขที่เห็นแล้วกด Enter || ตัวอย่าง:--6 5-6";
     btnYes.innerText = "✅ ยืนเลขซ้ำ";
     btnNo.innerText = "❌ ไม่ยืนเลขซ้ำ";
-    timerText.innerText = "0:40";
+    timerText.innerText = formatTime(totalTime);
   } else {
     title.innerText = "Roman Numeral Simulator";
     randomBtn.innerText = "Start";
     chatInput.placeholder = "Type the numbers you see and press Enter || Example:--6 5-6";
     btnYes.innerText = "✅ Stand Duplicate";
     btnNo.innerText = "❌ No Stand Duplicate";
-    timerText.innerText = "0:40";
+    timerText.innerText = formatTime(totalTime);
   }
+
+  document.getElementById("number-choice-label").textContent = currentLanguage === "th"
+    ? "เลือกตัวเลข (1 - 6):"
+    : "Choose a number (1 - 6):";
 }
 
 function getStartMessage() {
@@ -217,14 +225,18 @@ function startPositionSelection(chatBox) {
   selectedPositions = [];
   resetBoardSelectionStyles();
 
-  const promptMsg = document.createElement("div");
-  promptMsg.className = "bg-[#ce860e] px-3 py-1 rounded-lg text-white max-w-xs self-start font-extrabold italic";
   const eyeSrc = document.getElementById("eye-default-1").src;
   const isOpenEye = eyeSrc.includes("open_eye.png");
-  promptMsg.textContent = currentLanguage === "th"
-    ? (isOpenEye ? "เลือกตำแหน่งที่เป็นเลขซ้ำจากภาพด้านบน" : "เลือกตำแหน่งที่ไม่ซ้ำจากภาพด้านบน")
-    : (isOpenEye ? "Select the duplicate positions from the images above" : "Select the non-duplicate positions from the images above");
-  chatBox.appendChild(promptMsg);
+  const progressLabel = document.getElementById("selection-progress-label");
+  progressLabel.textContent = currentLanguage === "th"
+    ? (isOpenEye
+      ? "คลิกเลือกแผ่นป้ายที่เป็นเลขซ้ำบนตารางด้านบนให้ครบ 6 ตำแหน่ง"
+      : "คลิกเลือกแผ่นป้ายที่ไม่ซ้ำบนตารางด้านบนให้ครบ 6 ตำแหน่ง")
+    : (isOpenEye
+      ? "Click the duplicate tiles above and select all 6 positions"
+      : "Click the non-duplicate tiles above and select all 6 positions");
+  document.getElementById("selection-progress-count").textContent = "0 / 6";
+  document.getElementById("selection-progress").classList.remove("hidden");
 
   const images = getBoardImages();
   images.forEach((img, index) => {
@@ -239,6 +251,7 @@ function startPositionSelection(chatBox) {
       }
 
       updateBoardSelectionStyles();
+      document.getElementById("selection-progress-count").textContent = `${selectedPositions.length} / 6`;
 
       if (selectedPositions.length === 6) {
         evaluateSelection(chatBox);
@@ -269,6 +282,7 @@ function evaluateSelection(chatBox) {
 
   selectionFinished = true;
   selectionMode = false;
+  clearInterval(timerInterval);
 
   const eyeSrc = document.getElementById("eye-default-1").src;
   const isOpenEye = eyeSrc.includes("open_eye.png");
@@ -352,7 +366,7 @@ document.getElementById("random-btn").addEventListener("click", () => {
   document.getElementById("eye-default-1").src = eyeType;
   document.getElementById("eye-default-2").style.display = "none";
 
-  mainNum = Math.floor(Math.random() * 8) + 1; 
+  mainNum = Math.floor(Math.random() * 6) + 1; 
   let otherNums = [];
   for (let i = 1; i <= 8; i++) if (i !== mainNum) otherNums.push(i);
 
@@ -406,6 +420,7 @@ document.addEventListener("DOMContentLoaded", () => {
   const randomBtn = document.getElementById("random-btn");
   const rowBottom = document.getElementById("row-bottom");
   const choiceDiv = document.getElementById("choice-div");
+  const numberChoiceDiv = document.getElementById("number-choice-div");
 
   randomBtn.addEventListener("click", () => {
     chatSection.classList.remove("hidden");
@@ -415,6 +430,7 @@ document.addEventListener("DOMContentLoaded", () => {
     selectionFinished = false;
     selectedPositions = [];
     resetBoardSelectionStyles();
+    document.getElementById("selection-progress").classList.add("hidden");
 
     //reset
     phase = 0;
@@ -425,6 +441,7 @@ document.addEventListener("DOMContentLoaded", () => {
     // เอา input กลับมา
     chatInput.style.display = "block";
     choiceDiv.classList.add("hidden");
+    numberChoiceDiv.classList.add("hidden");
 
     const startMsg = document.createElement("div");
     startMsg.className = `
@@ -480,42 +497,48 @@ document.addEventListener("DOMContentLoaded", () => {
         botMsg.innerHTML = `<i>${getBotMessage("mostFrequent")}</i>`; // ✅
         chatBox.appendChild(botMsg);
         phase = 3;
-      } else if (phase === 3) {
-          // ผู้เล่นพิมพ์เลขซ้ำ
-          userMostFreq = parseInt(userText);
-
-          // เฉลยทั้งหมด
-          for (let i = 0; i < 12; i++) {
-            let row = i < 6 ? "row-top" : "row-bottom";
-            document.getElementById(row).children[i % 6].src = `symbol_${slots[i]}.png`;
-          }
-
-          chatInput.style.display = "none"; // ซ่อน input
-
-          if (userMostFreq !== mainNum) {
-            // ผู้เล่นตอบผิด จบเกม
-            clearInterval(timerInterval);
-            const botMsg = document.createElement("div");
-            botMsg.className = "px-3 py-1 rounded-lg text-[#730000] bg-[#FB4141] max-w-xs self-start font-extrabold";
-            botMsg.innerHTML = getBotMessage("wrongAnswer", { mainNum });
-            chatBox.appendChild(botMsg);
-
-            // ซ่อนปุ่ม choice
-            choiceDiv.classList.add("hidden");
-            chatInput.style.display = "none";
-            phase = 0;
-            turn = 0;
-            round = 0;
-            mainNum = null;
-          } else {
-            // ผู้เล่นตอบถูก ไปต่อ
-            choiceDiv.classList.remove("hidden");
-            phase = 4;
-          }
+        chatInput.style.display = "none";
+        numberChoiceDiv.classList.remove("hidden");
       }
 
       chatBox.scrollTop = chatBox.scrollHeight;
     }
+  });
+
+  numberChoiceDiv.querySelectorAll("[data-number]").forEach((numberButton) => {
+    numberButton.addEventListener("click", () => {
+      if (phase !== 3) return;
+
+      userMostFreq = Number(numberButton.dataset.number);
+      const userMsg = document.createElement("div");
+      userMsg.className = "bg-purple-600 px-3 py-1 rounded-lg text-white max-w-xs self-end";
+      userMsg.textContent = String(userMostFreq);
+      chatBox.appendChild(userMsg);
+
+      for (let i = 0; i < 12; i++) {
+        const row = i < 6 ? "row-top" : "row-bottom";
+        document.getElementById(row).children[i % 6].src = `symbol_${slots[i]}.png`;
+      }
+
+      numberChoiceDiv.classList.add("hidden");
+      if (userMostFreq !== mainNum) {
+        clearInterval(timerInterval);
+        const wrongMsg = document.createElement("div");
+        wrongMsg.className = "px-3 py-1 rounded-lg text-[#730000] bg-[#FB4141] max-w-xs self-start font-extrabold";
+        wrongMsg.textContent = getBotMessage("wrongAnswer");
+        chatBox.appendChild(wrongMsg);
+        choiceDiv.classList.add("hidden");
+        phase = 0;
+        turn = 0;
+        round = 0;
+        mainNum = null;
+      } else {
+        choiceDiv.classList.remove("hidden");
+        phase = 4;
+      }
+
+      chatBox.scrollTop = chatBox.scrollHeight;
+    });
   });
 
   // ปุ่มตรวจคำตอบ
@@ -523,7 +546,6 @@ document.addEventListener("DOMContentLoaded", () => {
   document.getElementById("btn-no").addEventListener("click", () => checkAnswer(false));
 
   function checkAnswer(isYes) {
-    clearInterval(timerInterval);
     const botMsg = document.createElement("div");
 
     // แปลง eyeType เป็น open/close
